@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ser or Estar Quiz</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: Arial, Helvetica, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .quiz {
+        width: 100%;
+        max-width: 600px;
+        border: 1px solid #444;
+        padding: 30px;
+        background: #080808;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 28px;
+    }
+
+    .subtitle {
+        color: #aaa;
+        font-size: 14px;
+        margin-bottom: 30px;
+    }
+
+    .progress-container {
+        width: 100%;
+        height: 6px;
+        background: #333;
+        margin-bottom: 25px;
+    }
+
+    .progress {
+        height: 100%;
+        width: 0%;
+        background: white;
+        transition: width 0.3s;
+    }
+
+    #questionNumber {
+        color: #aaa;
+        font-size: 13px;
+        margin-bottom: 12px;
+    }
+
+    #question {
+        font-size: 21px;
+        line-height: 1.5;
+        margin-bottom: 25px;
+    }
+
+    .choices {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    button {
+        font-family: inherit;
+        cursor: pointer;
+    }
+
+    .choice {
+        background: black;
+        border: 1px solid white;
+        color: white;
+        padding: 16px;
+        text-align: left;
+        font-size: 16px;
+        transition: 0.15s;
+    }
+
+    .choice:hover:not(:disabled) {
+        background: white;
+        color: black;
+    }
+
+    .choice:disabled {
+        cursor: default;
+        opacity: 0.8;
+    }
+
+    .choice.correct {
+        background: white;
+        color: black;
+        border: 2px solid white;
+    }
+
+    .choice.wrong {
+        border: 2px solid #888;
+        color: #888;
+    }
+
+    #feedback {
+        min-height: 24px;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+
+    #nextButton {
+        display: none;
+        width: 100%;
+        padding: 14px;
+        margin-top: 20px;
+        background: white;
+        color: black;
+        border: 1px solid white;
+        font-size: 16px;
+    }
+
+    #nextButton:hover {
+        background: #ccc;
+    }
+
+    #result {
+        display: none;
+        text-align: center;
+    }
+
+    #score {
+        font-size: 48px;
+        margin: 25px 0;
+    }
+
+    #retryButton {
+        background: white;
+        color: black;
+        border: none;
+        padding: 14px 25px;
+        font-size: 16px;
+        margin-top: 15px;
+    }
+
+    #retryButton:hover {
+        background: #ccc;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="quiz">
+
+    <div id="quizContent">
+        <h1>Ser or Estar?</h1>
+        <div class="subtitle">Choose the correct answer.</div>
+
+        <div class="progress-container">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <div id="questionNumber"></div>
+        <div id="question"></div>
+
+        <div class="choices" id="choices"></div>
+
+        <div id="feedback"></div>
+
+        <button id="nextButton" onclick="NextQuestion()">Next Question →</button>
+    </div>
+
+    <div id="result">
+        <h1>Quiz Complete</h1>
+        <div id="score"></div>
+        <p id="resultMessage"></p>
+        <button id="retryButton" onclick="RestartQuiz()">Try Again</button>
+    </div>
+
+</div>
+
+<script>
+    // Answer choices
+    const choices = ["Ser", "Estar", "None"];
+
+    // Questions and answers
+    const questions = [
+        {
+            question: "Does this sentence use ser or estar?\n\nYo soy de Korea.",
+            answer: "Ser",
+            explanation: "'Soy' comes from ser. It describes origin."
+        },
+        {
+            question: "Does this sentence use ser or estar?\n\nLa clase está en la escuela.",
+            answer: "Estar",
+            explanation: "'Está' comes from estar. It describes location."
+        },
+        {
+            question: "Does this sentence use ser or estar?\n\n¿Puedo comerme a mi padre? Se ve muy rico.",
+            answer: "None",
+            explanation: "'Se ve' uses the verb ver (to see/look), not ser or estar."
+        }
+    ];
+
+    // Quiz variables
+    let currentQuestion = 0;
+    let score = 0;
+    let answered = false;
+
+    // Load question
+    function AskQuestion() {
+        answered = false;
+
+        const q = questions[currentQuestion];
+
+        document.getElementById("questionNumber").textContent =
+            `Question ${currentQuestion + 1} / ${questions.length}`;
+
+        document.getElementById("question").textContent = q.question;
+
+        document.getElementById("progress").style.width =
+            `${(currentQuestion / questions.length) * 100}%`;
+
+        document.getElementById("feedback").textContent = "";
+        document.getElementById("nextButton").style.display = "none";
+
+        const choicesContainer = document.getElementById("choices");
+        choicesContainer.innerHTML = "";
+
+        // Create buttons
+        choices.forEach(choice => {
+            const button = document.createElement("button");
+            button.className = "choice";
+            button.textContent = choice;
+
+            button.onclick = () => CheckAnswer(choice, button);
+
+            choicesContainer.appendChild(button);
+        });
+    }
+
+    // Check the user's answer
+    function CheckAnswer(choice, clickedButton) {
+        if (answered) return;
+
+        answered = true;
+
+        const q = questions[currentQuestion];
+        const correct = choice === q.answer;
+
+        if (correct) {
+            score++;
+        }
+
+        // Disable all buttons
+        const buttons = document.querySelectorAll(".choice");
+        buttons.forEach(button => {
+            button.disabled = true;
+
+            if (button.textContent === q.answer) {
+                button.classList.add("correct");
+            }
+        });
+
+        // Mark wrong selection
+        if (!correct) {
+            clickedButton.classList.add("wrong");
+        }
+
+        // Feedback
+        document.getElementById("feedback").textContent =
+            (correct ? "Correct! " : "Incorrect. ") + q.explanation;
+
+        document.getElementById("nextButton").style.display = "block";
+
+        if (currentQuestion === questions.length - 1) {
+            document.getElementById("nextButton").textContent = "See Results →";
+        }
+    }
+
+    // Go to next question
+    function NextQuestion() {
+        currentQuestion++;
+
+        if (currentQuestion >= questions.length) {
+            ShowResults();
+            return;
+        }
+
+        AskQuestion();
+    }
+
+    // Results
+    function ShowResults() {
+        document.getElementById("quizContent").style.display = "none";
+        document.getElementById("result").style.display = "block";
+
+        document.getElementById("progress").style.width = "100%";
+
+        document.getElementById("score").textContent =
+            `${score} / ${questions.length}`;
+
+        let message;
+
+        if (score === questions.length) {
+            message = "Perfect score! You know your ser and estar.";
+        } else if (score >= 2) {
+            message = "Good job! You're getting the hang of it.";
+        } else {
+            message = "Keep practicing. You'll get it!";
+        }
+
+        document.getElementById("resultMessage").textContent = message;
+    }
+
+    // Restart
+    function RestartQuiz() {
+        currentQuestion = 0;
+        score = 0;
+        answered = false;
+
+        document.getElementById("quizContent").style.display = "block";
+        document.getElementById("result").style.display = "none";
+        document.getElementById("nextButton").textContent = "Next Question →";
+
+        AskQuestion();
+    }
+
+    // Start quiz
+    AskQuestion();
+</script>
+
+</body>
+</html>
